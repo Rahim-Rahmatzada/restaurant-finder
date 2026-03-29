@@ -35,7 +35,7 @@ def fetch_data(postcode):
     }
 
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=5)
         return response
     except requests.RequestException:
         return None
@@ -53,6 +53,10 @@ def display_restaurants(data):
     """
     restaurants = data.get("restaurants", [])[:10]
 
+    if not restaurants:
+        print("No restaurants found for this postcode.")
+        return
+
     print(f"\nShowing {len(restaurants)} restaurants:\n")
 
     for r in restaurants:
@@ -62,7 +66,8 @@ def display_restaurants(data):
             c.get("name", "") for c in r.get("cuisines", [])
         )
 
-        rating = r.get("rating", {}).get("starRating", "N/A")
+        rating_value = r.get("rating", {}).get("starRating")
+        rating = rating_value if rating_value is not None else "N/A"
 
         addr = r.get("address", {})
         address = ", ".join(filter(None, [
