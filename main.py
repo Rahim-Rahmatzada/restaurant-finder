@@ -1,31 +1,61 @@
 import requests
+from typing import Dict, List, Optional, TypedDict
 
-DEFAULT_POSTCODE = "CB74DL"
+DEFAULT_POSTCODE: str = "CB74DL"
 
 
-def get_postcode():
+class Cuisine(TypedDict):
+    name: str
+    uniqueName: str
+
+
+class Rating(TypedDict):
+    count: int
+    starRating: Optional[float]
+    userRating: Optional[float]
+
+
+class Address(TypedDict):
+    city: str
+    firstLine: str
+    postalCode: str
+
+
+class Restaurant(TypedDict):
+    id: str
+    name: str
+    uniqueName: str
+    address: Address
+    rating: Rating
+    cuisines: List[Cuisine]
+
+
+class ApiResponse(TypedDict):
+    restaurants: List[Restaurant]
+
+
+def get_postcode() -> str:
     """
     Prompt user for a postcode.
 
     If no input is provided, default postcode is used.
     The result is normalised by removing spaces and converting to uppercase.
     """
-    user_input = input(f"Enter postcode (press Enter to use default {DEFAULT_POSTCODE}): ").strip()
-    postcode = user_input or DEFAULT_POSTCODE
+    user_input: str = input(f"Enter postcode (press Enter to use default {DEFAULT_POSTCODE}): ").strip()
+    postcode: str = user_input or DEFAULT_POSTCODE
     return postcode.replace(" ", "").upper()
 
 
-def fetch_data(postcode):
+def fetch_data(postcode: str) -> Optional[requests.Response]:
     """
     Fetch restaurant data from the JET API for a given postcode.
 
     Returns:
         requests.Response | None: HTTP response object if successful, otherwise None.
     """
-    url = f"https://uk.api.just-eat.io/discovery/uk/restaurants/enriched/bypostcode/{postcode}"
+    url: str = f"https://uk.api.just-eat.io/discovery/uk/restaurants/enriched/bypostcode/{postcode}"
 
-    # required headers to avoid Cloudflare blocking non-browser requests
-    headers = {
+    headers: Dict[str, str] = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         "Accept": "application/json, text/plain, */*",
         "Accept-Language": "en-GB,en;q=0.9",
@@ -35,13 +65,13 @@ def fetch_data(postcode):
     }
 
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        response: requests.Response = requests.get(url, headers=headers, timeout=5)
         return response
     except requests.RequestException:
         return None
 
 
-def display_restaurants(data):
+def display_restaurants(data: ApiResponse) -> None:
     """
     Display the first 10 restaurants from the API response.
 
@@ -51,7 +81,7 @@ def display_restaurants(data):
     - Rating
     - Address
     """
-    restaurants = data.get("restaurants", [])[:10]
+    restaurants: List[Restaurant] = data.get("restaurants", [])[:10]
 
     if not restaurants:
         print("No restaurants found for this postcode.")
@@ -60,30 +90,28 @@ def display_restaurants(data):
     print(f"\nShowing {len(restaurants)} restaurants:\n")
 
     for r in restaurants:
-        name = r.get("name", "N/A")
+        name: str = r["name"]
 
-        cuisines = ", ".join(
-            c.get("name", "") for c in r.get("cuisines", [])
+        cuisines: str = ", ".join(
+            c["name"] for c in r["cuisines"] if c.get("name")
         )
 
-        rating_value = r.get("rating", {}).get("starRating")
-        rating = rating_value if rating_value is not None else "N/A"
+        rating: Optional[float] = r["rating"]["starRating"]
 
-        addr = r.get("address", {})
-        address = ", ".join(filter(None, [
-            addr.get("firstLine"),
-            addr.get("city"),
-            addr.get("postalCode"),
+        address: str = ", ".join(filter(None, [
+            r["address"]["firstLine"],
+            r["address"]["city"],
+            r["address"]["postalCode"],
         ]))
 
         print("Name:", name)
         print("Cuisines:", cuisines)
-        print("Rating:", rating)
+        print("Rating:", rating if rating is not None else "N/A")
         print("Address:", address)
         print("=" * 80)
 
 
-def main():
+def main() -> None:
     """
     Main program flow:
     - Get postcode input
@@ -91,10 +119,10 @@ def main():
     - Handle errors
     - Display restaurant data
     """
-    postcode = get_postcode()
+    postcode: str = get_postcode()
     print("Using postcode:", postcode)
 
-    response = fetch_data(postcode)
+    response: Optional[requests.Response] = fetch_data(postcode)
 
     if not response:
         print("Request failed")
@@ -108,7 +136,7 @@ def main():
         return
 
     try:
-        data = response.json()
+        data: ApiResponse = response.json()
     except ValueError:
         print("Invalid response received")
         return
