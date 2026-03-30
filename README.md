@@ -82,12 +82,13 @@ If given more time, the following improvements could be made:
 
 ## Project Structure
 ```
-justeat-restaurant-finder/
+restaurant-finder/
 │
 ├── main.py
 ├── requirements.txt
 ├── README.md
-└── .gitignore
+├── .gitignore
+└── images/
 ```
 
 ## Assessment Criteria Coverage
