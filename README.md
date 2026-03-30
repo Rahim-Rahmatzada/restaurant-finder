@@ -2,7 +2,7 @@
 
 ### 1. Clone repository
 ```bash
-git clone https://github.com/<your-username>/restaurant-finder.git
+git clone https://github.com/Rahim-Rahmatzada/restaurant-finder.git
 cd restaurant-finder
 ```
 
